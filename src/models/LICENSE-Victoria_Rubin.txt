@@ -1,0 +1,12 @@
+Victoria Rubin (β Ver AvatarSample_4)
+Author : VRoid Project (pixiv Inc.)
+License: CC0 1.0 Universal  https://creativecommons.org/publicdomain/zero/1.0/
+Source : https://opengameart.org/content/vroid-studio-cc0-models  (avatarsample_g.zip)
+Official terms: https://vroid.pixiv.help/hc/en-us/articles/360014900233
+
+"To the extent possible under law, pixiv Inc. has waived all copyright and related or
+neighboring rights to this model."
+
+Modification by this project: embedded textures downscaled to <=1024px (thumbnail 256px)
+with tools/shrink-vrm.py to reduce file size. Mesh, skeleton, materials and license
+metadata are unchanged.

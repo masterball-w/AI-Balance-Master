@@ -1,0 +1,384 @@
+/* ============ AI余额管理大师 · 桌宠样式 ============ */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body {
+  width: 100%;
+  height: 100%;
+  background: transparent;
+  overflow: hidden;
+  font-family: "Segoe UI", "Microsoft YaHei", "PingFang SC", sans-serif;
+  user-select: none;
+  -webkit-user-select: none;
+  cursor: default;
+}
+
+#ui-root {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  padding-bottom: 6px;
+}
+
+/* ---------------- 桌宠舞台 ---------------- */
+.pet-stage {
+  position: relative;
+  width: 280px;
+  height: 420px;
+  cursor: grab;
+}
+/* 形象：VRM 画布（透明 WebGL）或 SVG 兜底；加载完成前都不显示，避免闪烁 */
+.pet-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  visibility: hidden; /* 不能用 display:none，否则取不到画布尺寸 */
+  /* 取景到大腿：画布底部渐隐，像是从桌面边缘「探出」来 */
+  -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 84%, transparent 100%);
+  mask-image: linear-gradient(to bottom, #000 0%, #000 84%, transparent 100%);
+}
+.pet-stage.vrm-ready .pet-shadow { display: none; }
+.pet-stage.vrm-ready .pet-canvas { visibility: visible; }
+.pet-stage:not(.fallback) .pet-svg { display: none; }
+.pet-stage.fallback .pet-canvas { display: none; }
+.pet-stage.fallback .pet-svg { display: block; width: 220px; height: 260px; margin: 150px 30px 0; }
+.pet-stage:active { cursor: grabbing; }
+
+.pet-svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  animation: floatBob 3.2s ease-in-out infinite;
+  will-change: transform;
+  filter: drop-shadow(0 4px 10px rgba(255, 122, 160, 0.35));
+  transition: transform 0.25s ease;
+}
+
+/* 待机：上下浮动 */
+@keyframes floatBob {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-7px); }
+}
+
+/* 脚下影子 */
+.pet-shadow {
+  position: absolute;
+  left: 50%;
+  bottom: 2px;
+  width: 120px;
+  height: 18px;
+  transform: translateX(-50%);
+  background: radial-gradient(ellipse at center, rgba(90, 60, 90, 0.30) 0%, rgba(90, 60, 90, 0) 70%);
+  animation: shadowPulse 3.2s ease-in-out infinite;
+  pointer-events: none;
+}
+@keyframes shadowPulse {
+  0%, 100% { transform: translateX(-50%) scale(1);   opacity: 0.9; }
+  50%      { transform: translateX(-50%) scale(0.82); opacity: 0.55; }
+}
+
+/* ---------------- 部件动画 ---------------- */
+.tail {
+  transform-box: fill-box;
+  transform-origin: 8% 85%;
+  animation: tailWag 1.9s ease-in-out infinite;
+}
+@keyframes tailWag {
+  0%, 100% { transform: rotate(0deg); }
+  40%      { transform: rotate(10deg); }
+  70%      { transform: rotate(-5deg); }
+}
+
+.arm-right {
+  transform-box: fill-box;
+  transform-origin: 6% 92%;
+  animation: wave 2.8s ease-in-out infinite;
+}
+@keyframes wave {
+  0%, 55%, 100% { transform: rotate(0deg); }
+  68%           { transform: rotate(-16deg); }
+  81%           { transform: rotate(8deg); }
+}
+
+/* 眨眼（作用于每只眼睛） */
+.eyes-normal .eye {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: blink 4.6s infinite;
+}
+.eyes-normal .eye:nth-child(2) { animation-delay: 0.03s; }
+@keyframes blink {
+  0%, 91%, 100% { transform: scaleY(1); }
+  94%, 96%      { transform: scaleY(0.08); }
+}
+
+/* 开心眼 / 张嘴笑：默认隐藏，悬停时切换 */
+.eyes-happy, .mouth-open { display: none; }
+.cheek {
+  transform-box: fill-box;
+  transform-origin: center;
+  transition: transform 0.25s ease;
+}
+
+/* 星星发夹闪烁 */
+.star-pin {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: twinkle 2.4s ease-in-out infinite;
+}
+@keyframes twinkle {
+  0%, 100% { transform: scale(1) rotate(0deg);    opacity: 1; }
+  50%      { transform: scale(1.15) rotate(12deg); opacity: 0.85; }
+}
+
+/* ---------------- 悬停动效 ---------------- */
+.pet-stage.hover .pet-svg {
+  animation: hop 0.55s cubic-bezier(0.3, 1.7, 0.5, 1) 2;
+  transform: scale(1.07);
+  filter: drop-shadow(0 10px 18px rgba(255, 122, 160, 0.55));
+}
+@keyframes hop {
+  0%, 100%  { transform: scale(1.07) translateY(0); }
+  30%       { transform: scale(1.05, 0.94) translateY(4px); }
+  55%       { transform: scale(1.02, 1.1) translateY(-16px); }
+  75%       { transform: scale(1.06, 0.98) translateY(2px); }
+}
+
+.pet-stage.hover .eyes-normal,
+.pet-stage.hover .mouth-smile { display: none; }
+.pet-stage.hover .eyes-happy,
+.pet-stage.hover .mouth-open  { display: block; }
+
+.pet-stage.hover .cheek { transform: scale(1.3); }
+
+.pet-stage.hover .tail {
+  animation: tailWag 0.7s ease-in-out infinite;
+}
+.pet-stage.hover .arm-right {
+  animation: waveFast 0.42s ease-in-out infinite;
+}
+@keyframes waveFast {
+  0%, 100% { transform: rotate(6deg); }
+  50%      { transform: rotate(-24deg); }
+}
+
+.pet-stage.hover .pet-shadow {
+  animation: none;
+  transform: translateX(-50%) scale(0.75);
+  opacity: 0.45;
+}
+
+/* ---------------- 悬停粒子（爱心 / 星星） ---------------- */
+.particles {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: visible;
+}
+.particle {
+  position: absolute;
+  font-size: 15px;
+  opacity: 0;
+  animation: particleUp 1.15s ease-out forwards;
+  will-change: transform, opacity;
+}
+@keyframes particleUp {
+  0%   { opacity: 0;    transform: translateY(0) scale(0.5) rotate(0deg); }
+  15%  { opacity: 1; }
+  100% { opacity: 0;    transform: translateY(-72px) scale(1.25) rotate(18deg); }
+}
+
+/* ---------------- 到期警告徽章 ---------------- */
+.alert-badge {
+  position: absolute;
+  top: 8px;
+  right: 34px;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 32% 30%, #ff8a8a, #f03d3d);
+  box-shadow: 0 2px 8px rgba(240, 61, 61, 0.65), inset 0 -2px 4px rgba(0,0,0,0.18);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  animation: badgeWiggle 1.1s ease-in-out infinite;
+  z-index: 5;
+}
+.alert-badge::after {
+  content: "";
+  position: absolute;
+  inset: -5px;
+  border-radius: 50%;
+  border: 2px solid rgba(240, 61, 61, 0.5);
+  animation: badgeRing 1.6s ease-out infinite;
+}
+@keyframes badgeWiggle {
+  0%, 100% { transform: rotate(0deg) scale(1); }
+  20%      { transform: rotate(-12deg) scale(1.06); }
+  45%      { transform: rotate(10deg) scale(1.06); }
+  65%      { transform: rotate(-6deg); }
+}
+@keyframes badgeRing {
+  0%   { transform: scale(0.8); opacity: 1; }
+  100% { transform: scale(1.7); opacity: 0; }
+}
+.alert-badge.hidden { display: none; }
+
+/* ---------------- 提醒气泡 ---------------- */
+.bubble {
+  width: 288px;
+  margin-bottom: -22px; /* 与舞台头顶留白重叠，节省窗口高度 */
+  opacity: 0;
+  transform: translateY(14px) scale(0.7);
+  transform-origin: bottom center;
+  transition: opacity 0.24s ease, transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1);
+  pointer-events: none;
+  position: relative;
+  z-index: 10;
+}
+.bubble.show {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  pointer-events: auto;
+}
+.bubble-inner {
+  background: rgba(255, 255, 255, 0.97);
+  border: 1.5px solid #ffd0df;
+  border-radius: 16px;
+  padding: 10px 12px 9px;
+  box-shadow: 0 10px 32px rgba(180, 90, 130, 0.35), 0 2px 8px rgba(180, 90, 130, 0.18);
+  backdrop-filter: blur(6px);
+}
+.bubble-tail {
+  position: absolute;
+  left: 50%;
+  bottom: -8px;
+  width: 14px;
+  height: 14px;
+  transform: translateX(-50%) rotate(45deg);
+  background: #fff;
+  border-right: 1.5px solid #ffd0df;
+  border-bottom: 1.5px solid #ffd0df;
+}
+
+.bubble-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #d6336c;
+  padding-bottom: 7px;
+  border-bottom: 1px dashed #ffd6e3;
+  margin-bottom: 7px;
+}
+.bubble-icon { font-size: 15px; animation: bellRing 1.6s ease-in-out infinite; display: inline-block; }
+@keyframes bellRing {
+  0%, 100% { transform: rotate(0deg); }
+  15%      { transform: rotate(14deg); }
+  30%      { transform: rotate(-12deg); }
+  45%      { transform: rotate(8deg); }
+  60%      { transform: rotate(-5deg); }
+}
+
+.bubble-items { display: flex; flex-direction: column; gap: 7px; }
+
+.b-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  background: linear-gradient(135deg, #fff5f8, #ffeff5);
+  border: 1px solid #ffe1ec;
+  border-radius: 10px;
+}
+.b-item.urgent { background: linear-gradient(135deg, #fff0f0, #ffe4e6); border-color: #ffc9c9; }
+
+.b-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex: none;
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.04);
+}
+.b-main { flex: 1; min-width: 0; }
+.b-name-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #43305a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.b-days {
+  font-size: 10.5px;
+  font-weight: 800;
+  padding: 1px 7px;
+  border-radius: 999px;
+  flex: none;
+}
+.b-days.d-danger  { background: #ffe3e3; color: #e03131; animation: pulseDanger 1.2s infinite; }
+.b-days.d-warn    { background: #fff3d6; color: #e8930c; }
+.b-days.d-ok      { background: #e6fcf0; color: #2b9e60; }
+@keyframes pulseDanger {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(224, 49, 49, 0.35); }
+  50%      { box-shadow: 0 0 0 4px rgba(224, 49, 49, 0); }
+}
+.b-meta {
+  margin-top: 2px;
+  font-size: 11px;
+  color: #8a7590;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.b-balance { color: #d6336c; font-weight: 700; }
+
+.b-quota {
+  width: 100%;
+  height: 4.5px;
+  border-radius: 4px;
+  background: #ffe3ee;
+  overflow: hidden;
+  margin-top: 4px;
+}
+.b-quota > i {
+  display: block;
+  height: 100%;
+  border-radius: 4px;
+  background: linear-gradient(90deg, #ff8fab, #ff6f91);
+  transition: width 0.3s ease;
+}
+
+.bubble-footer {
+  margin-top: 8px;
+  font-size: 11.5px;
+  text-align: center;
+  color: #a06a86;
+  background: repeating-linear-gradient(45deg, #fff4f8, #fff4f8 8px, #ffeff5 8px, #ffeff5 16px);
+  border-radius: 8px;
+  padding: 5px 6px;
+}
+.bubble-footer strong { color: #e03131; }
+
+.b-empty { font-size: 12px; color: #a08a9a; text-align: center; padding: 6px 0; }
+
+/* ---------------- 「未获取」状态 ---------------- */
+.b-na { color: #b49bb0; font-style: normal; }
+.b-days.d-none { background: #f1ecf3; color: #9b8aa6; }
+.b-fail { color: #e03131; font-weight: 700; }
+
+/* 紧凑气泡：3 条信息也能放进窗口 */
+.bubble-items { gap: 5px; }
+.b-item { padding: 5px 8px; }
+.b-meta { gap: 1px 8px; font-size: 10.5px; margin-top: 1px; }
+.b-quota { margin-top: 2px; height: 4px; }
+.bubble-head { padding-bottom: 5px; margin-bottom: 5px; }
+.bubble-footer { margin-top: 6px; padding: 4px 6px; }

@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI余额管理大师</title>
+  <link rel="stylesheet" href="manager.css" />
+</head>
+<body>
+  <div class="app">
+    <!-- ============ 顶栏 ============ -->
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-logo">
+          <svg viewBox="0 0 220 260" width="30" height="34">
+            <ellipse cx="110" cy="100" rx="58" ry="54" fill="#ffa9c6"/>
+            <ellipse cx="110" cy="103" rx="48" ry="44" fill="#ffe9e3"/>
+            <path d="M64 62 Q 52 34 49 17 Q 68 24 92 42 Z" fill="#ffa9c6"/>
+            <path d="M156 62 Q 168 34 171 17 Q 152 24 128 42 Z" fill="#ffa9c6"/>
+            <path d="M62 96 C 58 54 82 40 110 40 C 138 40 162 54 158 96 C 150 76 140 68 132 73 C 128 58 116 52 110 61 C 104 52 92 58 88 73 C 80 68 70 76 62 96 Z" fill="#ffb9d0"/>
+            <ellipse cx="88" cy="107" rx="9.5" ry="12.5" fill="#5a46e8"/>
+            <ellipse cx="132" cy="107" rx="9.5" ry="12.5" fill="#5a46e8"/>
+            <circle cx="85" cy="102" r="3.4" fill="#fff"/>
+            <circle cx="129" cy="102" r="3.4" fill="#fff"/>
+            <ellipse cx="73" cy="121" rx="10.5" ry="6" fill="#ff9db4" opacity="0.7"/>
+            <ellipse cx="147" cy="121" rx="10.5" ry="6" fill="#ff9db4" opacity="0.7"/>
+            <path d="M104 125 Q 110 131 116 125" fill="none" stroke="#d96a8b" stroke-width="2.5" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div class="brand-text">
+          <h1>AI 余额管理大师</h1>
+          <p>AI Balance Master · 订阅 / 余额 / 限额 一站掌握</p>
+        </div>
+      </div>
+      <div class="topbar-actions">
+        <div class="search-box">
+          <span>🔍</span>
+          <input id="search-input" type="text" placeholder="搜索平台 / 厂商 / 套餐…" />
+        </div>
+        <div class="refresh-box" title="自动刷新仅对已配置 API Key 的平台生效">
+          <button id="btn-refresh-all" class="btn btn-ghost">🔄 全部刷新</button>
+          <select id="auto-refresh" aria-label="自动刷新间隔">
+            <option value="0">自动刷新：关</option>
+            <option value="15">每 15 分钟</option>
+            <option value="30">每 30 分钟</option>
+            <option value="60">每 60 分钟</option>
+          </select>
+        </div>
+        <button id="btn-add" class="btn btn-primary">＋ 添加平台</button>
+      </div>
+    </header>
+
+    <!-- ============ 统计卡 ============ -->
+    <section class="stats">
+      <div class="stat-card">
+        <div class="stat-icon" style="background:#fff0f6;color:#d6336c;">🤖</div>
+        <div><div class="stat-num" id="stat-total">0</div><div class="stat-label">管理平台</div></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon" style="background:#fff4e6;color:#e8590c;">⏰</div>
+        <div><div class="stat-num" id="stat-expiring">0</div><div class="stat-label">7 天内到期</div></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon" style="background:#e7f5ff;color:#1971c2;">🔄</div>
+        <div><div class="stat-num" id="stat-renew">0</div><div class="stat-label">自动续订中</div></div>
+      </div>
+      <div class="stat-card stat-balance">
+        <div class="stat-icon" style="background:#ebfbf0;color:#2b9e60;">💰</div>
+        <div>
+          <div class="stat-num" id="stat-balance">—</div>
+          <div class="stat-label">余额合计（仅已获取/已填写）</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 筛选 ============ -->
+    <nav class="filters">
+      <button class="filter-btn active" data-filter="all">全部</button>
+      <button class="filter-btn" data-filter="expiring">即将到期</button>
+      <button class="filter-btn" data-filter="renew">续订中</button>
+      <button class="filter-btn" data-filter="norenew">不续订 ⚠</button>
+      <span class="filter-tip">💡 没有公开余额接口的平台（ChatGPT / Cursor / Claude 等）请点「编辑」手动填写；填不了的就保持「未获取」，不会有任何编造的数字</span>
+    </nav>
+
+    <!-- ============ 平台卡片网格 ============ -->
+    <main id="grid" class="grid"></main>
+    <div id="empty-state" class="empty-state" style="display:none;">
+      <div class="empty-emoji">🐱</div>
+      <p>还没有任何平台，点击右上角「添加平台」开始吧～</p>
+    </div>
+  </div>
+
+  <!-- ============ 添加 / 编辑模态框 ============ -->
+  <div id="modal-mask" class="modal-mask" style="display:none;">
+    <div class="modal">
+      <div class="modal-head">
+        <h2 id="modal-title">添加平台</h2>
+        <button id="modal-close" class="btn-close">✕</button>
+      </div>
+
+      <form id="platform-form" class="modal-body">
+        <!-- 模板快选 -->
+        <div class="form-row">
+          <label>快速选择模板</label>
+          <select id="f-template">
+            <option value="-1">— 选择预置平台自动填充 —</option>
+          </select>
+        </div>
+
+        <div class="form-row form-2col">
+          <div>
+            <label>平台名称 <i class="req">*</i></label>
+            <input id="f-name" type="text" required placeholder="如 ChatGPT" />
+          </div>
+          <div>
+            <label>厂商</label>
+            <input id="f-vendor" type="text" placeholder="如 OpenAI" />
+          </div>
+        </div>
+
+        <div class="form-row form-2col">
+          <div>
+            <label>套餐名称</label>
+            <input id="f-plan" type="text" placeholder="如 Plus / Pro" />
+          </div>
+          <div>
+            <label>品牌色</label>
+            <div class="color-row">
+              <input id="f-color" type="color" value="#ff8fab" />
+              <div class="color-presets" id="color-presets"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-row form-2col">
+          <div>
+            <label>手动填写余额 <em class="hint">（留空 = 未获取）</em></label>
+            <input id="f-balance" type="number" step="any" placeholder="留空 = 未获取" />
+          </div>
+          <div>
+            <label>余额单位</label>
+            <input id="f-unit" type="text" list="unit-list" placeholder="USD / CNY / credits" />
+            <datalist id="unit-list">
+              <option value="USD"></option>
+              <option value="CNY"></option>
+              <option value="credits"></option>
+              <option value="次"></option>
+              <option value="tokens"></option>
+              <option value="万 tokens"></option>
+            </datalist>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <label>余额说明</label>
+          <input id="f-balance-note" type="text" placeholder="如 充值余额 / 订阅制（含 $5 API 额度）" />
+        </div>
+
+        <!-- 自动获取：官方余额接口 + API Key -->
+        <div class="form-section" id="provider-section">
+          <div class="form-row" style="margin-bottom:8px;">
+            <label>余额数据来源 <em class="hint">（仅官方公开接口；其余平台请手动填写）</em></label>
+            <select id="f-provider"></select>
+          </div>
+          <div id="key-fields" class="form-row" style="display:none;">
+            <label>API Key <em class="hint" id="key-hint"></em></label>
+            <div class="key-row">
+              <input id="f-apikey" type="password" autocomplete="off" spellcheck="false" placeholder="粘贴 API Key" />
+              <button type="button" id="btn-key-clear" class="btn btn-ghost" style="display:none;">清除 Key</button>
+            </div>
+            <div class="key-note">🔒 Key 使用系统加密存储（Electron safeStorage）保存在本机，保存后界面只显示「已配置」，不会再读回，也不会写入日志。</div>
+            <div id="key-status" class="key-status"></div>
+          </div>
+        </div>
+
+        <!-- 5 小时限额 -->
+        <div class="form-section">
+          <label class="checkbox-row">
+            <input id="f-quota-enabled" type="checkbox" />
+            <span>启用 5 小时限额跟踪 <em>（如 Claude Code / GLM Coding Plan 的 5h 用量窗口）</em></span>
+          </label>
+          <div id="quota-fields" class="quota-fields" style="display:none;">
+            <div class="form-3col">
+              <div>
+                <label>窗口总量</label>
+                <input id="f-quota-total" type="number" step="any" min="0" placeholder="窗口总量，如 45" />
+              </div>
+              <div>
+                <label>已用</label>
+                <input id="f-quota-used" type="number" step="any" min="0" placeholder="已用量" />
+              </div>
+              <div>
+                <label>重置时间</label>
+                <input id="f-quota-reset" type="datetime-local" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-row form-2col">
+          <div>
+            <label>订阅日期</label>
+            <input id="f-subscribe-date" type="date" />
+          </div>
+          <div>
+            <label>到期日期 <em class="hint">（留空 = 长期有效）</em></label>
+            <input id="f-expiry-date" type="date" />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <label>自动续订</label>
+          <select id="f-auto-renew">
+            <option value="">未设置</option>
+            <option value="1">是（会自动扣费，注意取消时间）</option>
+            <option value="0">否</option>
+          </select>
+        </div>
+
+        <div class="form-row">
+          <label>备注</label>
+          <textarea id="f-notes" rows="2" placeholder="任意备注…"></textarea>
+        </div>
+
+        <div class="modal-foot">
+          <button type="button" id="btn-cancel" class="btn btn-ghost">取消</button>
+          <button type="submit" class="btn btn-primary" id="btn-save">保存</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="shared.js"></script>
+  <script src="manager.js"></script>
+</body>
+</html>

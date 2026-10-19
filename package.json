@@ -1,0 +1,49 @@
+{
+  "name": "ai-balance-master",
+  "productName": "AI余额管理大师",
+  "version": "1.1.0",
+  "description": "AI余额管理大师 —— 一只 VRM 二次元桌宠，帮你盯着各 AI 平台的余额、5 小时限额、订阅到期与续订；官方接口自动获取，拿不到就老实写「未获取」",
+  "main": "main.js",
+  "author": "AI_time",
+  "license": "MIT",
+  "scripts": {
+    "start": "electron .",
+    "test": "node --test tests/",
+    "build:vrm": "node scripts/build-vrm.js"
+  },
+  "devDependencies": {
+    "@pixiv/three-vrm": "^3.5.5",
+    "electron": "^33.2.0",
+    "esbuild": "^0.28.2",
+    "three": "^0.186.1"
+  },
+  "homepage": "https://github.com/masterball-w/AI-Balance-Master#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/masterball-w/AI-Balance-Master.git"
+  },
+  "bugs": {
+    "url": "https://github.com/masterball-w/AI-Balance-Master/issues"
+  },
+  "keywords": [
+    "ai",
+    "balance",
+    "quota",
+    "token",
+    "desktop-pet",
+    "electron",
+    "vrm",
+    "three.js",
+    "deepseek",
+    "kimi",
+    "openrouter",
+    "siliconflow",
+    "subscription-tracker",
+    "llm",
+    "anime",
+    "chinese"
+  ],
+  "engines": {
+    "node": ">=18"
+  }
+}

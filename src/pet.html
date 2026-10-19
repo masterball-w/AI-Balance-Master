@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' blob: data:; font-src 'self'">
+  <title>AI余额管理大师 · 桌宠</title>
+  <link rel="stylesheet" href="pet.css" />
+</head>
+<body>
+  <div id="ui-root">
+    <!-- 到期提醒气泡（悬停 / 点击徽章时展开） -->
+    <div id="bubble" class="bubble">
+      <div class="bubble-inner">
+        <div class="bubble-head">
+          <span class="bubble-icon">⏰</span>
+          <span class="bubble-title">即将到期提醒</span>
+        </div>
+        <div id="bubble-items" class="bubble-items"><!-- JS 渲染 --></div>
+        <div id="bubble-footer" class="bubble-footer"></div>
+      </div>
+      <div class="bubble-tail"></div>
+    </div>
+
+    <!-- 桌宠舞台（SVG 形象 + 徽章 + 粒子 + 影子） -->
+    <div id="pet-stage" class="pet-stage" title="点击打开管理器 · 拖动移动 · 右键菜单">
+      <div class="pet-shadow"></div>
+      <div id="particles" class="particles"></div>
+
+      <!--
+        兜底形象：原创手绘 SVG 猫娘（主形象为 VRM 3D 模型，见 pet-canvas）
+        特征：粉色双马尾 · 猫耳 · 星星发夹 · 水手服 · 挥手
+      -->
+      <canvas id="pet-canvas" class="pet-canvas"></canvas>
+      <!-- 兜底：VRM 加载失败时显示 -->
+      <svg id="pet-svg" class="pet-svg" viewBox="0 0 220 260" xmlns="http://www.w3.org/2000/svg" aria-label="AI余额管理大师桌宠">
+        <defs>
+          <linearGradient id="hairG" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#ffd4e2"/>
+            <stop offset="0.55" stop-color="#ffa9c6"/>
+            <stop offset="1" stop-color="#ff92b4"/>
+          </linearGradient>
+          <linearGradient id="eyeG" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#9d8bff"/>
+            <stop offset="1" stop-color="#5a46e8"/>
+          </linearGradient>
+          <linearGradient id="dressG" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#4d5d94"/>
+            <stop offset="1" stop-color="#364470"/>
+          </linearGradient>
+          <radialGradient id="cheekG" cx="0.5" cy="0.5" r="0.5">
+            <stop offset="0" stop-color="#ff87a8" stop-opacity="0.8"/>
+            <stop offset="1" stop-color="#ff87a8" stop-opacity="0"/>
+          </radialGradient>
+        </defs>
+
+        <!-- 尾巴（摇摆） -->
+        <g class="tail">
+          <path d="M150 208 C 188 204 201 176 188 148" fill="none" stroke="#ffa5c3" stroke-width="15" stroke-linecap="round"/>
+          <path d="M153 203 C 183 199 193 176 183 155" fill="none" stroke="#ffd0e0" stroke-width="5" stroke-linecap="round" opacity="0.85"/>
+          <circle cx="188" cy="148" r="8.5" fill="#ff8fb0"/>
+          <circle cx="186" cy="145" r="2.6" fill="#ffd9e6"/>
+        </g>
+
+        <!-- 双马尾 -->
+        <g class="twintails">
+          <path d="M58 84 C 34 108 32 156 44 198 C 47 209 59 210 61 199 C 52 160 54 120 68 94 Z" fill="url(#hairG)"/>
+          <path d="M162 84 C 186 108 188 156 176 198 C 173 209 161 210 159 199 C 168 160 166 120 152 94 Z" fill="url(#hairG)"/>
+          <path d="M50 150 C 47 168 46 184 48 196" fill="none" stroke="#ffd4e2" stroke-width="4" stroke-linecap="round" opacity="0.7"/>
+          <path d="M170 150 C 173 168 174 184 172 196" fill="none" stroke="#ffd4e2" stroke-width="4" stroke-linecap="round" opacity="0.7"/>
+          <!-- 马尾蝴蝶结发带 -->
+          <g class="ribbon ribbon-l">
+            <path d="M58 84 l -12 -6 v 12 Z" fill="#ff6f91"/>
+            <path d="M58 84 l 12 -6 v 12 Z" fill="#ff6f91"/>
+            <circle cx="58" cy="84" r="3.6" fill="#e85a80"/>
+          </g>
+          <g class="ribbon ribbon-r">
+            <path d="M162 84 l -12 -6 v 12 Z" fill="#ff6f91"/>
+            <path d="M162 84 l 12 -6 v 12 Z" fill="#ff6f91"/>
+            <circle cx="162" cy="84" r="3.6" fill="#e85a80"/>
+          </g>
+        </g>
+
+        <!-- 腿与鞋 -->
+        <g class="legs">
+          <ellipse cx="96" cy="228" rx="7" ry="11" fill="#ffe9e3"/>
+          <ellipse cx="124" cy="228" rx="7" ry="11" fill="#ffe9e3"/>
+          <ellipse cx="95" cy="241" rx="9.5" ry="6" fill="#3d4a6b"/>
+          <ellipse cx="125" cy="241" rx="9.5" ry="6" fill="#3d4a6b"/>
+          <ellipse cx="92.5" cy="239" rx="3" ry="1.8" fill="#5a6a9c"/>
+          <ellipse cx="122.5" cy="239" rx="3" ry="1.8" fill="#5a6a9c"/>
+        </g>
+
+        <!-- 身体：水手服 -->
+        <g class="body">
+          <path d="M84 150 L 136 150 L 150 216 Q 110 231 70 216 Z" fill="url(#dressG)"/>
+          <path d="M70 216 Q 110 231 150 216 L 148 224 Q 110 238 72 224 Z" fill="#2f3c63"/>
+          <!-- 水手领 -->
+          <path d="M84 146 L 110 172 L 136 146 L 136 156 L 110 182 L 84 156 Z" fill="#ffffff" stroke="#e8e2ee" stroke-width="1"/>
+          <!-- 胸前蝴蝶结 -->
+          <g class="bow">
+            <path d="M110 176 l -13 -7 v 14 Z" fill="#ff6f91"/>
+            <path d="M110 176 l 13 -7 v 14 Z" fill="#ff6f91"/>
+            <circle cx="110" cy="176" r="4" fill="#e85a80"/>
+          </g>
+        </g>
+
+        <!-- 左臂（叉腰） -->
+        <path class="arm arm-left" d="M86 156 C 70 164 62 178 66 192" fill="none" stroke="#ffe9e3" stroke-width="12" stroke-linecap="round"/>
+
+        <!-- 右臂（挥手） -->
+        <g class="arm-right">
+          <path d="M134 158 C 152 152 162 138 164 120" fill="none" stroke="#ffe9e3" stroke-width="12" stroke-linecap="round"/>
+          <path d="M134 158 C 146 155 154 147 158 137" fill="none" stroke="#ffdcd4" stroke-width="4" stroke-linecap="round" opacity="0.6"/>
+        </g>
+
+        <!-- 头部 -->
+        <g class="head">
+          <!-- 脑后长发 -->
+          <ellipse cx="110" cy="100" rx="58" ry="54" fill="url(#hairG)"/>
+          <!-- 脸 -->
+          <ellipse cx="110" cy="103" rx="48" ry="44" fill="#ffe9e3"/>
+          <!-- 猫耳 -->
+          <g class="ears">
+            <path d="M64 62 Q 52 34 49 17 Q 68 24 92 42 Z" fill="url(#hairG)"/>
+            <path d="M67 54 Q 60 38 58 27 Q 70 33 84 43 Z" fill="#ff8fb0"/>
+            <path d="M156 62 Q 168 34 171 17 Q 152 24 128 42 Z" fill="url(#hairG)"/>
+            <path d="M153 54 Q 160 38 162 27 Q 150 33 136 43 Z" fill="#ff8fb0"/>
+          </g>
+          <!-- 刘海 -->
+          <path d="M62 96 C 58 54 82 40 110 40 C 138 40 162 54 158 96 C 150 76 140 68 132 73 C 128 58 116 52 110 61 C 104 52 92 58 88 73 C 80 68 70 76 62 96 Z" fill="url(#hairG)"/>
+          <!-- 刘海高光 -->
+          <path d="M74 62 C 82 50 96 45 108 46" fill="none" stroke="#ffe1ec" stroke-width="5" stroke-linecap="round" opacity="0.8"/>
+          <!-- 星星发夹 -->
+          <g class="star-pin">
+            <path d="M146 57 l 2.7 5.7 6.2 0.7 -4.6 4.2 1.3 6.1 -5.6 -3.1 -5.6 3.1 1.3 -6.1 -4.6 -4.2 6.2 -0.7 Z" fill="#ffd166" stroke="#f4b942" stroke-width="0.8"/>
+          </g>
+
+          <!-- 眼睛（正常） -->
+          <g class="eyes eyes-normal">
+            <g class="eye">
+              <ellipse cx="88" cy="107" rx="9.5" ry="12.5" fill="url(#eyeG)"/>
+              <ellipse cx="88" cy="110" rx="6.5" ry="8" fill="#4a3ad0" opacity="0.55"/>
+              <circle cx="85" cy="102" r="3.4" fill="#ffffff" opacity="0.95"/>
+              <circle cx="91.5" cy="112" r="1.8" fill="#ffffff" opacity="0.7"/>
+              <path d="M78 97 Q 88 89 98 97" fill="none" stroke="#4a3b6b" stroke-width="2.6" stroke-linecap="round"/>
+            </g>
+            <g class="eye">
+              <ellipse cx="132" cy="107" rx="9.5" ry="12.5" fill="url(#eyeG)"/>
+              <ellipse cx="132" cy="110" rx="6.5" ry="8" fill="#4a3ad0" opacity="0.55"/>
+              <circle cx="129" cy="102" r="3.4" fill="#ffffff" opacity="0.95"/>
+              <circle cx="135.5" cy="112" r="1.8" fill="#ffffff" opacity="0.7"/>
+              <path d="M122 97 Q 132 89 142 97" fill="none" stroke="#4a3b6b" stroke-width="2.6" stroke-linecap="round"/>
+            </g>
+          </g>
+
+          <!-- 眼睛（开心 ^ ^，悬停时显示） -->
+          <g class="eyes eyes-happy">
+            <path d="M79 108 Q 88 97 97 108" fill="none" stroke="#4a3b6b" stroke-width="3.4" stroke-linecap="round"/>
+            <path d="M123 108 Q 132 97 141 108" fill="none" stroke="#4a3b6b" stroke-width="3.4" stroke-linecap="round"/>
+          </g>
+
+          <!-- 腮红 -->
+          <ellipse class="cheek" cx="73" cy="121" rx="10.5" ry="6" fill="url(#cheekG)"/>
+          <ellipse class="cheek" cx="147" cy="121" rx="10.5" ry="6" fill="url(#cheekG)"/>
+
+          <!-- 嘴（微笑） -->
+          <g class="mouth mouth-smile">
+            <path d="M104 125 Q 110 131 116 125" fill="none" stroke="#d96a8b" stroke-width="2.5" stroke-linecap="round"/>
+          </g>
+          <!-- 嘴（开心张嘴，悬停时显示） -->
+          <g class="mouth mouth-open">
+            <path d="M102 124 Q 110 136 118 124 Q 110 129 102 124 Z" fill="#e26a8d"/>
+            <path d="M106 128 Q 110 132 114 128 Q 110 131 106 128 Z" fill="#ff9db4"/>
+          </g>
+        </g>
+      </svg>
+
+      <!-- 到期警告徽章 -->
+      <div id="alert-badge" class="alert-badge hidden" title="有套餐即将到期！点击查看">
+        <svg viewBox="0 0 24 24" width="13" height="13">
+          <path d="M12 2 L 22 20 L 2 20 Z" fill="none" stroke="#fff" stroke-width="3" stroke-linejoin="round"/>
+          <line x1="12" y1="9" x2="12" y2="14" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+          <circle cx="12" cy="17" r="1.6" fill="#fff"/>
+        </svg>
+      </div>
+    </div>
+  </div>
+  <script src="shared.js"></script>
+  <script src="vendor/vrm-pet.bundle.js"></script>
+  <script src="pet.js"></script>
+</body>
+</html>
