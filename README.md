@@ -97,9 +97,16 @@
 
 ## 🚀 快速开始
 
-环境：**Windows 10/11**、Node.js ≥ 18。
+环境：**Windows 10/11**；源码运行方式另需 Node.js ≥ 18。
 
-### 方式一：双击启动（推荐）
+### 方式零：Releases 下载（免安装 Node）
+1. 打开 [Releases](https://github.com/masterball-w/AI-Balance-Master/releases/latest)，下载 `AI-Balance-Master-v1.1.0-win32-x64.zip`（约 115 MB）。
+2. 解压后双击文件夹里的 `AI余额管理大师.exe` 即可。
+
+> ⚠️ 该压缩包**未做代码签名**，Windows SmartScreen 可能提示「已保护你的电脑」，需点「更多信息 → 仍要运行」。
+> ⚠️ 该包由作者在 Linux 上交叉打包，**尚未在真实 Windows 上实机测试**；遇到问题欢迎提 [Issue](https://github.com/masterball-w/AI-Balance-Master/issues)。想自己打包可运行 `npm run pack:win`。
+
+### 方式一：双击启动（源码运行）
 ```
 双击 启动桌宠.bat        （或 start.bat）
 ```

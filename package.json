@@ -9,9 +9,11 @@
   "scripts": {
     "start": "electron .",
     "test": "node --test tests/",
-    "build:vrm": "node scripts/build-vrm.js"
+    "build:vrm": "node scripts/build-vrm.js",
+    "pack:win": "node scripts/pack-win.js"
   },
   "devDependencies": {
+    "@electron/packager": "^18.4.4",
     "@pixiv/three-vrm": "^3.5.5",
     "electron": "^33.2.0",
     "esbuild": "^0.28.2",
