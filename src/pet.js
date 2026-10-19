@@ -290,8 +290,6 @@ async function initVrm() {
     petStage.classList.add('vrm-ready');
     const m = vrmCtl.meta || {};
     console.log('[pet] VRM 已加载:', m.name || m.title || '(未命名)');
-    // 全局鼠标位置 → 头部/视线跟随
-    window.api.onCursor(({ nx, ny }) => vrmCtl && vrmCtl.setLook(nx, ny));
   } catch (err) {
     vrmCtl = null;
     console.error('[pet] VRM 加载失败，使用 SVG 猫娘兜底：', err && err.message ? err.message : err);
@@ -299,6 +297,12 @@ async function initVrm() {
   }
 }
 initVrm();
+// 全局鼠标位置（相对窗口左上角，CSS 像素）→ 头部/视线跟随；只注册一次，避免重复监听
+window.api.onCursor((p) => {
+  if (!vrmCtl || !p) return;
+  if (typeof p.x === 'number' && vrmCtl.setCursor) vrmCtl.setCursor(p.x, p.y);
+  else if (typeof p.nx === 'number') vrmCtl.setLook(p.nx, p.ny);
+});
 
 /* ---------------- 数据加载 ---------------- */
 async function refresh(render) {

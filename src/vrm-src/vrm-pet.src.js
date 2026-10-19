@@ -101,7 +101,10 @@ export async function create(opts) {
     camera.aspect = w / h;
     camera.updateProjectionMatrix();
     layoutCamera();
+    canvasRect = null;
   }
+  let canvasRect = null; // 缓存 canvas 在视口中的位置（resize 时失效）
+  window.addEventListener('resize', () => { canvasRect = null; });
   resize();
 
   // 眨眼 / 表情
@@ -118,6 +121,7 @@ export async function create(opts) {
     bounce: 0, bounceV: 0, // 弹跳弹簧
     blinkAt: 1.5, blinkT: -1,
     lookX: 0, lookY: 0, lookTX: 0, lookTY: 0,
+    cursor: null,      // 鼠标位置（窗口 CSS 像素），null = 未知
     wave: 0,
   };
 
@@ -129,8 +133,26 @@ export async function create(opts) {
   
   function bounceKick(v) { S.bounceV = Math.max(S.bounceV, v); }
 
+  const LOOK_PX = 300; // 鼠标偏离头部 300px 视为最大转动
+  const _hp = new THREE.Vector3(), _hs = new THREE.Vector3();
+  /** 把头部骨骼的世界坐标投影到窗口 CSS 像素坐标 */
+  function headScreen() {
+    if (!canvasRect) canvasRect = canvas.getBoundingClientRect();
+    const r = canvasRect;
+    (B.head || vrm.scene).getWorldPosition(_hs);
+    _hs.project(camera);
+    return { x: r.left + (_hs.x + 1) / 2 * r.width, y: r.top + (1 - _hs.y) / 2 * r.height };
+  }
+  function updateLookFromCursor() {
+    if (!S.cursor) return;
+    const hp = headScreen();
+    S.lookTX = clamp((S.cursor.x - hp.x) / LOOK_PX, -1, 1);
+    S.lookTY = clamp((hp.y - S.cursor.y) / LOOK_PX, -1, 1); // 正 = 鼠标在头部上方
+  }
+
   function animate(dt) {
     S.t += dt;
+    updateLookFromCursor();
     const t = S.t;
     S.hover = damp(S.hover, S.hoverTarget, 8, dt);
     S.drag = damp(S.drag, S.dragTarget, 10, dt);
@@ -161,7 +183,8 @@ export async function create(opts) {
     rot(B.upperChest, breath * 0.012, 0, 0);
 
     // 头部：跟随鼠标 + 轻微点头
-    const hx = S.lookY * 0.28 + Math.sin(t * 1.1) * 0.015 - S.pulse * 0.1 + h * 0.06;
+    // VRM1 约定下绕 X 轴正向旋转 = 低头（Rx(θ)·(0,0,1) = (0,-sinθ,cosθ)），故鼠标在上方（lookY>0）时取负 → 抬头
+    const hx = -S.lookY * 0.28 + Math.sin(t * 1.1) * 0.015 - S.pulse * 0.1 + h * 0.06;
     const hy = S.lookX * 0.55 + Math.sin(t * 0.6) * 0.03;
     const hz = -S.lookX * 0.05 + Math.sin(t * 0.8) * 0.02 + h * Math.sin(t * 4) * 0.04;
     rot(B.neck, hx * 0.4, hy * 0.4, hz * 0.4);
@@ -198,7 +221,9 @@ export async function create(opts) {
     setExpr('blink', blink * (1 - happy));
 
     // 视线
-    lookTarget.position.set(camera.position.x + S.lookX * 0.8, camTargetY + S.lookY * 0.6 + size.y * 0.3, camera.position.z);
+    // 视线：以头部世界坐标为基准，向镜头方向 0.9m，按鼠标方向偏移
+    if (B.head) B.head.getWorldPosition(_hp); else _hp.set(center.x, box.max.y - size.y * 0.08, center.z);
+    lookTarget.position.set(_hp.x + S.lookX * 0.6, _hp.y + S.lookY * 0.45, _hp.z + 0.9);
 
     vrm.update(dt);
   }
@@ -238,8 +263,12 @@ export async function create(opts) {
     },
     setHover(on) { S.hoverTarget = on ? 1 : 0; if (on) bounceKick(1.6); },
     setDragging(on) { S.dragTarget = on ? 1 : 0; },
-    /** nx, ny ∈ [-1,1]，相对窗口中心，y 向下为正 */
-    setLook(nx, ny) { S.lookTX = clamp(nx, -1, 1); S.lookTY = clamp(-ny, -1, 1); },
+    /** 鼠标位置：相对窗口左上角的 CSS 像素（y 向下），每帧按头部实际屏幕位置换算视线 */
+    setCursor(x, y) { S.cursor = { x, y }; },
+    /** 兼容旧接口：nx, ny ∈ [-1,1]，y 向下为正 */
+    setLook(nx, ny) { S.cursor = null; S.lookTX = clamp(nx, -1, 1); S.lookTY = clamp(-ny, -1, 1); },
+    /** 调试：头部在窗口中的屏幕坐标 */
+    headScreen,
     click() { S.pulse = 1; bounceKick(1.3); },
     pause() { running = false; },
     resume() { running = true; },

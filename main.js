@@ -397,19 +397,19 @@ function petContextMenu() {
   ]).popup({ window: petWindow });
 }
 
-/* 全局鼠标位置 → 桌宠头部/视线跟随（约 20Hz，仅在桌宠可见时发送） */
+/* 全局鼠标位置 → 桌宠头部/视线跟随（约 20Hz，仅在桌宠可见且相对位置变化时发送） */
 let cursorTimer = null;
 function startCursorTracking() {
   let lx = null, ly = null;
   cursorTimer = setInterval(() => {
     if (!petWindow || petWindow.isDestroyed() || !petWindow.isVisible()) return;
     const c = screen.getCursorScreenPoint();
-    if (c.x === lx && c.y === ly) return;
-    lx = c.x; ly = c.y;
     const b = petWindow.getBounds();
-    const nx = (c.x - (b.x + b.width / 2)) / 420;
-    const ny = (c.y - (b.y + b.height * 0.72)) / 420;
-    petWindow.webContents.send('pet:cursor', { nx, ny });
+    // 发送相对桌宠窗口左上角的坐标（DIP，与渲染进程 CSS 像素一致），由渲染进程按头部实际屏幕位置计算视线方向
+    const x = c.x - b.x, y = c.y - b.y;
+    if (x === lx && y === ly) return;
+    lx = x; ly = y;
+    petWindow.webContents.send('pet:cursor', { x, y });
   }, 50);
 }
 
