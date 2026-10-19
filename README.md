@@ -107,8 +107,8 @@
 
 ### 方式二：命令行
 ```bash
-git clone <你的仓库地址>
-cd AI_time
+git clone https://github.com/masterball-w/AI-Balance-Master.git
+cd AI-Balance-Master
 npm install        # 国内网络可加：--registry=https://registry.npmmirror.com，并设置 ELECTRON_MIRROR=https://npmmirror.com/mirrors/electron/
 npm start
 npx electron . --show-manager     # 启动并同时打开管理器

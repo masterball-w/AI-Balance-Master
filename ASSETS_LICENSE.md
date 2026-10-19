@@ -30,3 +30,8 @@
 
 ## 📦 第三方代码
 见 [THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md)（three.js、@pixiv/three-vrm，均为 MIT；Electron 为 MIT）。
+
+## 📄 本项目许可证适用范围
+
+注意：本许可证仅适用于本项目的源代码与原创素材（含 docs/banner.svg、src/pet.html 中的手绘 SVG 猫娘）。
+第三方素材（VRM 模型、three.js 等）遵循各自的许可证，详见 ASSETS_LICENSE.md 与 THIRD_PARTY_LICENSES.md。
